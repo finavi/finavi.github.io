@@ -2075,7 +2075,7 @@ input, select, textarea {
 				border-radius: 0.35em;
 				border: solid 3px #c5f467;
 				color: #c5f467;
-				content: 'View';
+				content: 'Open';
 				display: inline-block;
 				font-size: 0.8em;
 				font-weight: 400;
@@ -3089,8 +3089,8 @@ input, select, textarea {
 			#footer {
 				background-attachment: scroll;
 				background-color: #1f1815;
-				background-image: url("images/overlay.png"), url("../../images/bg.jpg");
-				background-position: top left,						bottom center;
+				/*background-image: url("images/overlay.png"), url("../../images/bg.jpg");
+				*/background-position: top left,						bottom center;
 				background-repeat: repeat,							no-repeat;
 				background-size: auto,							cover;
 				bottom: auto;
