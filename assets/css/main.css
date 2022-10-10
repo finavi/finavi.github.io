@@ -2153,6 +2153,13 @@ input, select, textarea {
 				right: 40px;
 			}
 
+			.image.avatar.htb img {
+				border-radius: 150%;
+				width: 100%;
+				position: relative;
+				right: 40px;
+			}
+
 /* List */
 
 	ol {
@@ -2701,8 +2708,8 @@ input, select, textarea {
 
 		#main > section {
 			border-top: solid 2px #c5f467;
-			margin: 4em 0 0 0;
-			padding: 4em 0 0 0;
+			margin: 2em 0 0 0;
+			padding: 2em 0 0 0;
 		}
 
 			#main > section:first-child {

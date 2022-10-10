@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+<!--
+	Strata by HTML5 UP
+-->
+<html>
+	<head>
+		<title>Photobomb Writeup @ Vittorio</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="icon" type="image/x-icon" href="./images/favicon.png">
+		
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+        <header id="header">
+            <div class="inner">
+                <img class="image avatar htb" src="images/photobomb_avatar.png" alt="" />
+                <h1>HackTheBox Writeup | Photobomb</h1>
+                <h1><a href="index.html">Back to Home Page</a></h1>
+            </div>
+        </header>
+
+		<!-- Main -->
+        <div id="main">
+
+            <!-- One -->
+                <section id="one">
+                    <header class="major">
+                        <h2><span class="mov"> </span></h2>
+                    </header>
+                    <p>Feel free to share this writeup on how I rooted <strong>Photobomb</strong> from Hack The Box. This is a Linux-Based Easy Box and it required some enumeration and inspection.</p>
+                </section>
+
+            <!-- Two -->
+                <section id="two">
+                    <header class="major">
+                        <h2>Enumeration</h2>
+                    </header>
+                    <p>As always we firstly check the open ports through the 1000 well known ones and gain information on the services running. We can do this with the usage of nmap.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/nmap.png" alt=""/></a>
+                            <h5>Nmap Output</h5>
+                            <style>
+                                .aligncenter {
+                                    text-align: center;
+                                }
+                                
+                                .aligncenter img {
+                                    border-radius: 0.45em;
+                                    width: 90%;
+                                    position: relative;
+                                }
+                            </style>
+                    </div>
+                    <p>We therefore find two open ports: <strong>22</strong> and <strong>80</strong> which are respectively for <strong>ssh</strong> and <strong>http</strong> services. We also note that nmap, by making an HTTP request to the IP address provided, attempts a redirect to <strong>http://photobomb.htb</strong>, we just have to add the domain in our <strong>/etc/hosts</strong>. So let's take a look at the web page.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/photobomb.jpg" alt=""/></a>
+                            <h5>Photobomb Homepage</h5>
+                    </div>
+                    <p>The first thing I generally do when I open a web page is to take a look at the source code, hoping to find some useful information.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/source.png" alt=""/></a>
+                            <h5>Photobomb Homepage Source Code</h5>
+                    </div>
+                    <p>What I found interesting is the presence of a new endpoint, <strong>/printer</strong>, but in particular the inclusion of the <strong>photobomb.js</strong> script which makes me think it might bring some information to collect.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/javascript.png" alt=""/></a>
+                            <h5>Photobomb Javascript Source Code</h5>
+                    </div>
+                    <p>Pretty sure there is something interesting here and to note &#128526; <br>Apparently we have just gained access to the endpoint <strong>/printer</strong> with the newly found credentials. Indeed . . .</p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/preauth.jpg" alt=""/></a>
+                            <h5>Photobomb Authentication Form</h5>
+                    </div>
+                    <p></p>
+                    <div class="aligncenter" style="text-align: center;">
+                            <img src="images/photobomb/postauth.jpg" alt=""/></a>
+                            <h5>Photobomb Printer Page</h5>
+                    </div>
+                    <p>Apparently this page allows you to download the above images in different formats. I have carried out, in vain, some analysis with exiftool, however, not obtaining interesting information. What could be done is to analyze, through the <strong>Burp Proxy</strong>, the HTTP requests that are exchanged between client and server when requesting the download of an image. Then we turn on our proxy and capture a call via Burp, which should look like the one in the photo below.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/donwload.jpg" alt=""/></a>
+                        <h5>Image Download Request</h5>
+                    </div>
+                    <p>The interesting parameter seems to be <strong>filetype</strong>. If we try to inject characters, they are reflected not in the body, but in one of the response headers, in particular in the <strong>Content-Disposition</strong> header. We can then attempt to break the statement that the backend is executing with a <strong>semicolon</strong> and parse the response.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/injection.jpg" alt=""/></a>
+                        <h5>Command Injection</h5>
+                    </div>
+                    <p>We just got confirmation that we can execute commands via HTTP request. So we just have to go <a href=https://www.revshells.com/>here</a> and get a shell! I personally like <a href=https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys//>this source</a> in order to upgrade my reverse shell, you're welcome &#128526;<br>The first steps are the standards. Let's first see if the <strong>wizard</strong> user can run the <strong>sudo</strong> command.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/sudo.jpg" alt=""/></a>
+                        <h5>Sudo Operations Wizard Can Do</h5>
+                    </div>
+                    <p>So we found that the <strong>wizard</strong> user is not required to have a password if he has to set an environment variable and run the script <strong>/otp/cleanup.sh</strong>. We just have to see this script specifically which commands it uses.</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/cleanup.png" alt=""/></a>
+                        <h5>The Cleanup.sh Script</h5>
+                    </div>
+                    <p>This <a href="https://book.hacktricks.xyz/linux-hardening/privilege-escalation#setenv">resource</a> is just for us, there is certainty since the find command inside the script is reported with relative path and not absolute. So why not abuse the SETENV property to escalate?</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/privesc.png" alt=""/></a>
+                        <h5>Privilege Escalation Steps</h5>
+                    </div>
+                    <p>Let's fire up the last command and . . . boom! We are now root &#128526;</p>
+                    <div class="aligncenter" style="text-align: center;">
+                        <img src="images/photobomb/privilege.jpg" alt=""/></a>
+                        <h5>Root Shell</h5>
+                    </div>
+                    <p>Learned a lot from this box, credits to the creator and onto the next one!</p>
+                </section>
+
+            <!-- Three -->
+                <section id="four">
+                    <script src="https://tryhackme.com/badge/127901"></script>
+                </section>
+
+            <!-- Four -->
+            
+
+        </div>
+
+		<!-- Footer -->
+        <footer id="footer">
+            <div class="inner">
+                <ul class="icons">
+                    <!--<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>-->
+                    <li><a href="https://www.linkedin.com/in/vittorio-fina/" class="icon brands fa-linkedin"><span class="label">Linkedin</span></a></li>
+                    <li><a href="https://github.com/finavi" class="icon brands fa-github"><span class="label">Github</span></a></li>
+                    <li><a href="https://app.hackthebox.com/profile/460686" class="icon solid fa-terminal"><span class="label">HackTheBox</span></a></li>
+                    <li><a href="mailto:vittoriofina@gmail.com" class="icon solid fa-envelope"><span class="label">Email</span></a></li>
+                </ul>
+                <ul class="copyright">
+                    <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+                </ul>
+            </div>
+        </footer>
+
+    <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <!--<script src="assets/js/jquery.poptrox.min.js"></script>-->
+        <script src="assets/js/browser.min.js"></script>
+        <script src="assets/js/breakpoints.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/main.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+        <script>
+            var typed = new Typed(".mov",{
+            strings: [,  "Hack The Box","Photobomb Writeup","Easy Box"] ,
+            typeSpeed: 50,
+            backSpeed: 100,
+            loop: true,
+            smartBackspace: false
+            })
+        </script>
+
+	</body>
+</html>
