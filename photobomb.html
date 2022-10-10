@@ -18,7 +18,7 @@
             <div class="inner">
                 <img class="image avatar htb" src="images/photobomb_avatar.png" alt="" />
                 <h1>HackTheBox Writeup | Photobomb</h1>
-                <h1><a href="index.html">Back to Home Page</a></h1>
+                <h1><a href="index.html">Home Page</a></h1>
             </div>
         </header>
 
@@ -36,7 +36,7 @@
             <!-- Two -->
                 <section id="two">
                     <header class="major">
-                        <h2>Enumeration</h2>
+                        <h2>Enumeration & Foothold</h2>
                     </header>
                     <p>As always we firstly check the open ports through the 1000 well known ones and gain information on the services running. We can do this with the usage of nmap.</p>
                     <div class="aligncenter" style="text-align: center;">
@@ -79,7 +79,7 @@
                             <img src="images/photobomb/postauth.jpg" alt=""/></a>
                             <h5>Photobomb Printer Page</h5>
                     </div>
-                    <p>Apparently this page allows you to download the above images in different formats. I have carried out, in vain, some analysis with exiftool, however, not obtaining interesting information. What could be done is to analyze, through the <strong>Burp Proxy</strong>, the HTTP requests that are exchanged between client and server when requesting the download of an image. Then we turn on our proxy and capture a call via Burp, which should look like the one in the photo below.</p>
+                    <p>Looks like this page allows you to download the above images in different formats. I have carried out, in vain, some analysis with exiftool, however, not obtaining interesting information. What could be done is to analyze, through the <strong>Burp Proxy</strong>, the HTTP requests that are exchanged between client and server when requesting the download of an image. Then we turn on our proxy and capture a call via Burp, which should look like the one in the photo below.</p>
                     <div class="aligncenter" style="text-align: center;">
                         <img src="images/photobomb/donwload.jpg" alt=""/></a>
                         <h5>Image Download Request</h5>
@@ -89,17 +89,23 @@
                         <img src="images/photobomb/injection.jpg" alt=""/></a>
                         <h5>Command Injection</h5>
                     </div>
-                    <p>We just got confirmation that we can execute commands via HTTP request. So we just have to go <a href=https://www.revshells.com/>here</a> and get a shell! I personally like <a href=https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys//>this source</a> in order to upgrade my reverse shell, you're welcome &#128526;<br>The first steps are the standards. Let's first see if the <strong>wizard</strong> user can run the <strong>sudo</strong> command.</p>
+                    <p>We just got confirmation that we can execute commands via HTTP request. So we just have to go <a href=https://www.revshells.com/>here</a> and get a shell! I personally like <a href=https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys//>this source</a> in order to upgrade my reverse shell, you're welcome &#128526;</p>
+                </section>
+                <section id="two">
+                    <header class="major">
+                        <h2>Privilege Escalation</h2>
+                    </header>
+                    <p>The first steps are the standards. Let's first see if the <strong>wizard</strong> user can run the <strong>sudo</strong> command.</p>
                     <div class="aligncenter" style="text-align: center;">
                         <img src="images/photobomb/sudo.jpg" alt=""/></a>
                         <h5>Sudo Operations Wizard Can Do</h5>
                     </div>
-                    <p>So we found that the <strong>wizard</strong> user is not required to have a password if he has to set an environment variable and run the script <strong>/otp/cleanup.sh</strong>. We just have to see this script specifically which commands it uses.</p>
+                    <p>So we found that the <strong>wizard</strong> user is not required to have a password if he has to set an environment variable and run the script <strong>/opt/cleanup.sh</strong>. We just have to see this script specifically which commands it uses.</p>
                     <div class="aligncenter" style="text-align: center;">
                         <img src="images/photobomb/cleanup.png" alt=""/></a>
                         <h5>The Cleanup.sh Script</h5>
                     </div>
-                    <p>This <a href="https://book.hacktricks.xyz/linux-hardening/privilege-escalation#setenv">resource</a> is just for us, there is certainty since the find command inside the script is reported with relative path and not absolute. So why not abuse the SETENV property to escalate?</p>
+                    <p>This <a href="https://book.hacktricks.xyz/linux-hardening/privilege-escalation#setenv">resource</a> is just for us, there is certainty since the <strong>find</strong> command inside the script is reported with relative path and not absolute. So why not abuse the SETENV property to escalate?</p>
                     <div class="aligncenter" style="text-align: center;">
                         <img src="images/photobomb/privesc.png" alt=""/></a>
                         <h5>Privilege Escalation Steps</h5>
