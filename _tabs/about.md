@@ -15,5 +15,3 @@ I am setting up this portfolio to keep track of my knowledge and have references
 In my spare time I play sports as much as I can, and for some time a strange passion for chess has arisen.
 
 ---
-
-I have included the link to my Curriculum Vitae [here](https://finavi.github.io/_tabs/assets/Vittorio_Fina_CV_Eng.pdf).
